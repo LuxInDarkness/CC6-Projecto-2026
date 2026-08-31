@@ -45,5 +45,18 @@
                 "contract_terms": "string"
             }
         }
+    },
+    "post_contrato_manufactura": {
+        "status_code": 201,
+        "Headers": {
+            "Content-Type": "application/json"
+        },
+        "Body": {
+            "success": true,
+            "message": "Contract created successfully",
+            "data": {
+                "contract_id": "string"
+            }
+        }
     }
 }
