@@ -1,0 +1,49 @@
+{
+    "get_contrato_discografia": {
+        "status_code": 200,
+        "Headers": {
+            "Content-Type": "application/json"
+        },
+        "Body": {
+            "success": true,
+            "message": "Contract retrieved successfully",
+            "data": {
+                "contract_id": "string",
+                "artist_name": "string",
+                "album_title": "string",
+                "release_date": "string",
+                "contract_terms": "string"
+            }
+        }
+    },
+    "post_contrato_discografia": {
+        "status_code": 201,
+        "Headers": {
+            "Content-Type": "application/json"
+        },
+        "Body": {
+            "success": true,
+            "message": "Contract created successfully",
+            "data": {
+                "contract_id": "string"
+            }
+        }
+    },
+    "get_contrato_manufactura": {
+        "status_code": 200,
+        "Headers": {
+            "Content-Type": "application/json"
+        },
+        "Body": {
+            "success": true,
+            "message": "Contract retrieved successfully",
+            "data": {
+                "contract_id": "string",
+                "manufacturer_name": "string",
+                "product_title": "string",
+                "release_date": "string",
+                "contract_terms": "string"
+            }
+        }
+    }
+}
