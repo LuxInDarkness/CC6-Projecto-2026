@@ -1,0 +1,170 @@
+openapi: 3.0.3
+
+info:
+  title: Contrato Discografia API
+  description: API for managing discography contracts.
+  version: 1.0.0
+
+servers:
+  - url: https://api.example.com
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /contrato_discografia:
+
+    post:
+      summary: Create a discography contract
+      operationId: postContratoDiscografia
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContratoDiscografiaRequest"
+
+      responses:
+
+        "201":
+          description: Contract created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContratoDiscografia"
+
+        "400":
+          description: Invalid request
+
+        "409":
+          description: Contract already exists
+
+
+  /contrato_discografia/{contract_id}:
+
+    get:
+      summary: Get a discography contract
+      operationId: getContratoDiscografia
+
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          description: Unique identifier of the contract
+          schema:
+            type: string
+          example: "12345"
+
+      responses:
+
+        "200":
+          description: Contract found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContratoDiscografia"
+
+        "404":
+          description: Contract not found
+
+
+    put:
+      summary: Update a discography contract
+      operationId: putContratoDiscografia
+
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          description: Unique identifier of the contract
+          schema:
+            type: string
+          example: "12345"
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContratoDiscografiaRequest"
+
+      responses:
+
+        "200":
+          description: Contract successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContratoDiscografia"
+
+        "400":
+          description: Invalid request
+
+        "404":
+          description: Contract not found
+
+
+components:
+
+  schemas:
+
+    ContratoDiscografiaRequest:
+      type: object
+
+      required:
+        - artist_name
+        - album_title
+        - release_date
+        - contract_terms
+
+      properties:
+
+        artist_name:
+          type: string
+          description: Name of the artist
+          example: "The Example Band"
+
+        album_title:
+          type: string
+          description: Title of the album
+          example: "Greatest Hits"
+
+        release_date:
+          type: string
+          format: date
+          description: Album release date
+          example: "2026-09-03"
+
+        contract_terms:
+          type: string
+          description: Terms and conditions of the contract
+          example: "Discography contract terms..."
+
+
+    ContratoDiscografia:
+      allOf:
+
+        - $ref: "#/components/schemas/ContratoDiscografiaRequest"
+
+        - type: object
+
+          required:
+            - contract_id
+
+          properties:
+
+            contract_id:
+              type: string
+              description: Unique identifier of the contract
+              example: "12345"
+
+
+  securitySchemes:
+
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -1,0 +1,154 @@
+openapi: 3.0.3
+
+info:
+  title: Event Location Availability API
+  description: >
+    API for querying available event locations by date,
+    including the price for each available date.
+  version: 1.0.0
+
+servers:
+  - url: https://api.example.com
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /disponible:
+
+    get:
+      summary: Get available event locations
+      description: >
+        Returns event locations that are available within the requested
+        date range. Each available date includes its corresponding price.
+
+      operationId: getDisponibilidad
+
+      parameters:
+
+        - name: start_date
+          in: query
+          required: true
+          description: Start date of the requested availability period.
+          schema:
+            type: string
+            format: date
+          example: "2026-10-01"
+
+        - name: end_date
+          in: query
+          required: true
+          description: End date of the requested availability period.
+          schema:
+            type: string
+            format: date
+          example: "2026-10-31"
+
+      responses:
+
+        "200":
+          description: Available event locations found.
+          content:
+            application/json:
+              schema:
+                type: object
+
+                required:
+                  - start_date
+                  - end_date
+                  - locations
+
+                properties:
+
+                  start_date:
+                    type: string
+                    format: date
+                    example: "2026-10-01"
+
+                  end_date:
+                    type: string
+                    format: date
+                    example: "2026-10-31"
+
+                  locations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AvailableLocation"
+
+        "400":
+          description: Invalid date range or request parameters.
+
+        "401":
+          description: Authentication failed.
+
+        "500":
+          description: Internal server error.
+
+
+components:
+
+  schemas:
+
+    AvailableLocation:
+      type: object
+
+      required:
+        - location_id
+        - location_name
+        - availability
+
+      properties:
+
+        location_id:
+          type: string
+          description: Unique identifier of the event location.
+          example: "LOC-001"
+
+        location_name:
+          type: string
+          description: Name of the event location.
+          example: "Grand Ballroom"
+
+        availability:
+          type: array
+          description: Available dates and their corresponding prices.
+          items:
+            $ref: "#/components/schemas/AvailableDate"
+
+
+    AvailableDate:
+      type: object
+
+      required:
+        - date
+        - price
+        - currency
+
+      properties:
+
+        date:
+          type: string
+          format: date
+          description: Date on which the location is available.
+          example: "2026-10-05"
+
+        price:
+          type: number
+          format: double
+          description: Price for using the location on this date.
+          example: 2500.00
+
+        currency:
+          type: string
+          description: ISO 4217 currency code.
+          example: "USD"
+
+
+  securitySchemes:
+
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

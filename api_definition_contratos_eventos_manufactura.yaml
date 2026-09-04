@@ -1,0 +1,170 @@
+openapi: 3.0.3
+
+info:
+  title: Contrato Manufactura API
+  description: API for managing manufacturing contracts.
+  version: 1.0.0
+
+servers:
+  - url: https://api.example.com
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /contrato_manufactura:
+
+    post:
+      summary: Create a manufacturing contract
+      operationId: postContratoManufactura
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContratoManufacturaRequest"
+
+      responses:
+
+        "201":
+          description: Contract created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContratoManufactura"
+
+        "400":
+          description: Invalid request
+
+        "409":
+          description: Contract already exists
+
+
+  /contrato_manufactura/{contract_id}:
+
+    get:
+      summary: Get a manufacturing contract
+      operationId: getContratoManufactura
+
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          description: Unique identifier of the contract
+          schema:
+            type: string
+          example: "12345"
+
+      responses:
+
+        "200":
+          description: Contract found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContratoManufactura"
+
+        "404":
+          description: Contract not found
+
+
+    put:
+      summary: Update a manufacturing contract
+      operationId: putContratoManufactura
+
+      parameters:
+        - name: contract_id
+          in: path
+          required: true
+          description: Unique identifier of the contract
+          schema:
+            type: string
+          example: "12345"
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContratoManufacturaRequest"
+
+      responses:
+
+        "200":
+          description: Contract successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContratoManufactura"
+
+        "400":
+          description: Invalid request
+
+        "404":
+          description: Contract not found
+
+
+components:
+
+  schemas:
+
+    ContratoManufacturaRequest:
+      type: object
+
+      required:
+        - manufacturer_name
+        - product_title
+        - release_date
+        - contract_terms
+
+      properties:
+
+        manufacturer_name:
+          type: string
+          description: Name of the manufacturer
+          example: "ACME Manufacturing"
+
+        product_title:
+          type: string
+          description: Title of the manufactured product
+          example: "Product XYZ"
+
+        release_date:
+          type: string
+          format: date
+          description: Product release date
+          example: "2026-09-03"
+
+        contract_terms:
+          type: string
+          description: Terms and conditions of the contract
+          example: "Manufacturing contract terms..."
+
+
+    ContratoManufactura:
+      allOf:
+
+        - $ref: "#/components/schemas/ContratoManufacturaRequest"
+
+        - type: object
+
+          required:
+            - contract_id
+
+          properties:
+
+            contract_id:
+              type: string
+              description: Unique identifier of the contract
+              example: "12345"
+
+
+  securitySchemes:
+
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
