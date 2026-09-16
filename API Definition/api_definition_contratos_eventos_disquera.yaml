@@ -3,7 +3,7 @@ openapi: 3.0.3
 info:
   title: Contrato Discografia API
   description: API for managing discography contracts.
-  version: 1.0.0
+  version: 1.1.0
 
 servers:
   - url: https://api.example.com
@@ -15,6 +15,31 @@ security:
 paths:
 
   /contrato_discografia:
+
+    get:
+      summary: List discography contracts
+      operationId: listContratoDiscografia
+
+      parameters:
+        - $ref: "#/components/parameters/ArtistIdQuery"
+        - $ref: "#/components/parameters/StatusQuery"
+
+      responses:
+
+        "200":
+          description: Discography contracts found.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ContratoDiscografia"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     post:
       summary: Create a discography contract
@@ -30,59 +55,63 @@ paths:
       responses:
 
         "201":
-          description: Contract created
+          description: Contract created.
+          headers:
+            Location:
+              description: URI of the created contract.
+              schema:
+                type: string
+              example: "/contrato_discografia/12345"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ContratoDiscografia"
 
         "400":
-          description: Invalid request
+          $ref: "#/components/responses/BadRequest"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
         "409":
-          description: Contract already exists
+          $ref: "#/components/responses/Conflict"
 
+        "422":
+          $ref: "#/components/responses/InvalidReference"
+
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /contrato_discografia/{contract_id}:
+
+    parameters:
+      - $ref: "#/components/parameters/ContractId"
 
     get:
       summary: Get a discography contract
       operationId: getContratoDiscografia
 
-      parameters:
-        - name: contract_id
-          in: path
-          required: true
-          description: Unique identifier of the contract
-          schema:
-            type: string
-          example: "12345"
-
       responses:
 
         "200":
-          description: Contract found
+          description: Contract found.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ContratoDiscografia"
 
-        "404":
-          description: Contract not found
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     put:
       summary: Update a discography contract
       operationId: putContratoDiscografia
-
-      parameters:
-        - name: contract_id
-          in: path
-          required: true
-          description: Unique identifier of the contract
-          schema:
-            type: string
-          example: "12345"
 
       requestBody:
         required: true
@@ -94,76 +123,220 @@ paths:
       responses:
 
         "200":
-          description: Contract successfully updated
+          description: Contract successfully updated.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ContratoDiscografia"
 
         "400":
-          description: Invalid request
+          $ref: "#/components/responses/BadRequest"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
         "404":
-          description: Contract not found
+          $ref: "#/components/responses/NotFound"
 
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+        "422":
+          $ref: "#/components/responses/InvalidReference"
+
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
 components:
 
+  parameters:
+
+    ContractId:
+      name: contract_id
+      in: path
+      required: true
+      description: Unique internal identifier of the contract.
+
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+      example: 12345
+
+    ArtistIdQuery:
+      name: artist_id
+      in: query
+      required: false
+      description: Filter contracts by artist.
+
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+
+    StatusQuery:
+      name: status
+      in: query
+      required: false
+      description: Filter contracts by status.
+
+      schema:
+        $ref: "#/components/schemas/ContractStatus"
+
   schemas:
+
+    ContractStatus:
+      type: string
+      enum: [DRAFT, ACTIVE, SUSPENDED, EXPIRED, TERMINATED, CANCELLED]
 
     ContratoDiscografiaRequest:
       type: object
-
-      required:
-        - artist_name
-        - album_title
-        - release_date
-        - contract_terms
+      required: [artist_id, album_id, release_date, contract_terms]
 
       properties:
 
-        artist_name:
-          type: string
-          description: Name of the artist
-          example: "The Example Band"
+        artist_id:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 101
 
-        album_title:
-          type: string
-          description: Title of the album
-          example: "Greatest Hits"
+        album_id:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 501
+
+        record_label_id:
+          type: integer
+          format: int64
+          minimum: 1
+          nullable: true
+          example: 21
 
         release_date:
           type: string
           format: date
-          description: Album release date
           example: "2026-09-03"
 
         contract_terms:
           type: string
-          description: Terms and conditions of the contract
+          minLength: 1
           example: "Discography contract terms..."
 
+        status:
+          $ref: "#/components/schemas/ContractStatus"
+
+        start_date:
+          type: string
+          format: date
+          nullable: true
+          example: "2026-09-01"
+
+        end_date:
+          type: string
+          format: date
+          nullable: true
+          example: "2031-08-31"
 
     ContratoDiscografia:
       allOf:
-
         - $ref: "#/components/schemas/ContratoDiscografiaRequest"
-
         - type: object
-
-          required:
-            - contract_id
+          required: [contract_id, artist_name, album_title, created_at, updated_at]
 
           properties:
 
             contract_id:
-              type: string
-              description: Unique identifier of the contract
-              example: "12345"
+              type: integer
+              format: int64
+              example: 12345
 
+            artist_name:
+              type: string
+              readOnly: true
+              example: "The Example Band"
+
+            album_title:
+              type: string
+              readOnly: true
+              example: "Greatest Hits"
+
+            record_label_name:
+              type: string
+              nullable: true
+              readOnly: true
+              example: "Example Records"
+
+            created_at:
+              type: string
+              format: date-time
+              readOnly: true
+
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+
+    Error:
+      type: object
+      required: [code, message]
+
+      properties:
+
+        code:
+          type: string
+          example: "INVALID_REFERENCE"
+
+        message:
+          type: string
+          example: "album_id does not belong to artist_id."
+
+  responses:
+
+    BadRequest:
+      description: Invalid request data.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Unauthorized:
+      description: Authentication failed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotFound:
+      description: Contract not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Conflict:
+      description: Request conflicts with an existing contract or business rule.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    InvalidReference:
+      description: One or more referenced entities do not exist or violate a database relationship.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
 
   securitySchemes:
-
     bearerAuth:
       type: http
       scheme: bearer

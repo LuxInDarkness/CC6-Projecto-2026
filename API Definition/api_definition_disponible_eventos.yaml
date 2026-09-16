@@ -4,8 +4,8 @@ info:
   title: Event Location Availability API
   description: >
     API for querying available event locations by date,
-    including the price for each available date.
-  version: 1.0.0
+    including the daily price for each available date.
+  version: 1.1.0
 
 servers:
   - url: https://api.example.com
@@ -21,30 +21,15 @@ paths:
     get:
       summary: Get available event locations
       description: >
-        Returns event locations that are available within the requested
-        date range. Each available date includes its corresponding price.
-
+        Returns active event locations that are available within the requested
+        inclusive date range. Dates with an active HOLD or CONFIRMED booking
+        are not returned as available.
       operationId: getDisponibilidad
 
       parameters:
-
-        - name: start_date
-          in: query
-          required: true
-          description: Start date of the requested availability period.
-          schema:
-            type: string
-            format: date
-          example: "2026-10-01"
-
-        - name: end_date
-          in: query
-          required: true
-          description: End date of the requested availability period.
-          schema:
-            type: string
-            format: date
-          example: "2026-10-31"
+        - $ref: "#/components/parameters/StartDate"
+        - $ref: "#/components/parameters/EndDate"
+        - $ref: "#/components/parameters/SiteId"
 
       responses:
 
@@ -53,101 +38,168 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-
-                required:
-                  - start_date
-                  - end_date
-                  - locations
-
-                properties:
-
-                  start_date:
-                    type: string
-                    format: date
-                    example: "2026-10-01"
-
-                  end_date:
-                    type: string
-                    format: date
-                    example: "2026-10-31"
-
-                  locations:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/AvailableLocation"
+                $ref: "#/components/schemas/AvailabilityResponse"
 
         "400":
-          description: Invalid date range or request parameters.
+          $ref: "#/components/responses/BadRequest"
 
         "401":
-          description: Authentication failed.
+          $ref: "#/components/responses/Unauthorized"
 
         "500":
-          description: Internal server error.
-
+          $ref: "#/components/responses/InternalServerError"
 
 components:
 
+  parameters:
+
+    StartDate:
+      name: start_date
+      in: query
+      required: true
+      description: Inclusive start date of the requested availability period.
+
+      schema:
+        type: string
+        format: date
+      example: "2026-10-01"
+
+    EndDate:
+      name: end_date
+      in: query
+      required: true
+      description: Inclusive end date of the requested availability period.
+
+      schema:
+        type: string
+        format: date
+      example: "2026-10-31"
+
+    SiteId:
+      name: site_id
+      in: query
+      required: false
+      description: Optional site identifier used to restrict the search.
+
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+      example: 1
+
   schemas:
 
-    AvailableLocation:
+    AvailabilityResponse:
       type: object
+      required: [start_date, end_date, locations]
 
-      required:
-        - location_id
-        - location_name
-        - availability
+      properties:
+
+        start_date:
+          type: string
+          format: date
+          example: "2026-10-01"
+
+        end_date:
+          type: string
+          format: date
+          example: "2026-10-31"
+
+        locations:
+          type: array
+          items:
+            $ref: "#/components/schemas/AvailableLocation"
+
+    AvailableLocation:
+
+      type: object
+      required: [location_id, location_name, availability]
 
       properties:
 
         location_id:
-          type: string
-          description: Unique identifier of the event location.
-          example: "LOC-001"
+          type: integer
+          format: int64
+          description: Internal identifier of the site.
+          example: 1
 
         location_name:
           type: string
-          description: Name of the event location.
           example: "Grand Ballroom"
 
         availability:
           type: array
-          description: Available dates and their corresponding prices.
           items:
             $ref: "#/components/schemas/AvailableDate"
 
-
     AvailableDate:
-      type: object
 
-      required:
-        - date
-        - price
-        - currency
+      type: object
+      required: [date, price, currency]
 
       properties:
 
         date:
           type: string
           format: date
-          description: Date on which the location is available.
           example: "2026-10-05"
 
         price:
           type: number
           format: double
-          description: Price for using the location on this date.
+          minimum: 0
+          description: Daily price for the site on this date.
           example: 2500.00
 
         currency:
           type: string
-          description: ISO 4217 currency code.
+          minLength: 3
+          maxLength: 3
+          description: Three-letter currency code.
           example: "USD"
 
+    Error:
+
+      type: object
+      required: [code, message]
+
+      properties:
+
+        code:
+          type: string
+          example: "INVALID_DATE_RANGE"
+
+        message:
+          type: string
+          example: "end_date must be greater than or equal to start_date."
+
+  responses:
+
+    BadRequest:
+      description: Invalid date range or request parameters.
+
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Unauthorized:
+      description: Authentication failed.
+
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    InternalServerError:
+      description: Internal server error.
+
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
 
   securitySchemes:
-
     bearerAuth:
       type: http
       scheme: bearer
