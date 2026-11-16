@@ -137,3 +137,15 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+EVENTS_PEER_BASE_URL = os.getenv(
+    "EVENTS_PEER_BASE_URL",
+    ""
+).rstrip("/")
+
+EVENTS_PEER_TIMEOUT_SECONDS = float(
+    os.getenv(
+        "EVENTS_PEER_TIMEOUT_SECONDS",
+        "3",
+    )
+)

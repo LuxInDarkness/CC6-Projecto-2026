@@ -5,19 +5,23 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.models import ManufacturingContracts
+from core.models import (
+    ManufacturingContracts,
+)
 
 from api.serializers.manufacturing import (
     ManufacturingContractWriteSerializer,
     build_manufacturing_response,
 )
 
+from api.services.peer_response import (
+    get_peer_fallback_response,
+)
 
-def get_manufacturing_contract(
-    external_id,
-):
 
-    queryset = (
+def get_manufacturing_queryset():
+
+    return (
         ManufacturingContracts.objects
         .select_related(
             "contract",
@@ -29,8 +33,26 @@ def get_manufacturing_contract(
         )
     )
 
+
+def find_manufacturing_contract(
+    external_id,
+):
+
+    return (
+        get_manufacturing_queryset()
+        .filter(
+            contract__external_id=external_id
+        )
+        .first()
+    )
+
+
+def get_manufacturing_contract_or_404(
+    external_id,
+):
+
     return get_object_or_404(
-        queryset,
+        get_manufacturing_queryset(),
         contract__external_id=external_id,
     )
 
@@ -55,8 +77,10 @@ class ManufacturingContractCreateView(
 
         contract = serializer.save()
 
-        contract = get_manufacturing_contract(
-            contract.contract.external_id
+        contract = (
+            get_manufacturing_contract_or_404(
+                contract.contract.external_id
+            )
         )
 
         return Response(
@@ -79,15 +103,28 @@ class ManufacturingContractDetailView(
         external_id,
     ):
 
-        contract = get_manufacturing_contract(
-            external_id
+        contract = (
+            find_manufacturing_contract(
+                external_id
+            )
         )
 
-        return Response(
-            build_manufacturing_response(
-                contract
+        if contract is not None:
+
+            return Response(
+                build_manufacturing_response(
+                    contract
+                ),
+                status=status.HTTP_200_OK,
+            )
+
+        return get_peer_fallback_response(
+            request,
+            (
+                f"/api/contracts/"
+                f"manufacturing/"
+                f"{external_id}"
             ),
-            status=status.HTTP_200_OK,
         )
 
     def put(
@@ -96,8 +133,11 @@ class ManufacturingContractDetailView(
         external_id,
     ):
 
-        contract = get_manufacturing_contract(
-            external_id
+        # PUT remains strictly local.
+        contract = (
+            get_manufacturing_contract_or_404(
+                external_id
+            )
         )
 
         serializer = (
@@ -113,8 +153,10 @@ class ManufacturingContractDetailView(
 
         serializer.save()
 
-        contract = get_manufacturing_contract(
-            external_id
+        contract = (
+            get_manufacturing_contract_or_404(
+                external_id
+            )
         )
 
         return Response(

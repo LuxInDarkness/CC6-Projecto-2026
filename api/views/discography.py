@@ -5,21 +5,23 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.models import DiscographyContracts
+from core.models import (
+    DiscographyContracts,
+)
 
 from api.serializers.discography import (
     DiscographyContractWriteSerializer,
     build_discography_response,
 )
 
+from api.services.peer_response import (
+    get_peer_fallback_response,
+)
 
-def get_discography_contract(external_id):
-    """
-    Fetch a complete discography contract using the
-    public contract external ID.
-    """
 
-    queryset = (
+def get_discography_queryset():
+
+    return (
         DiscographyContracts.objects
         .select_related(
             "contract",
@@ -32,13 +34,33 @@ def get_discography_contract(external_id):
         )
     )
 
+
+def find_discography_contract(
+    external_id,
+):
+
+    return (
+        get_discography_queryset()
+        .filter(
+            contract__external_id=external_id
+        )
+        .first()
+    )
+
+
+def get_discography_contract_or_404(
+    external_id,
+):
+
     return get_object_or_404(
-        queryset,
+        get_discography_queryset(),
         contract__external_id=external_id,
     )
 
 
-class DiscographyContractCreateView(APIView):
+class DiscographyContractCreateView(
+    APIView
+):
 
     permission_classes = [AllowAny]
 
@@ -56,10 +78,10 @@ class DiscographyContractCreateView(APIView):
 
         contract = serializer.save()
 
-        # Reload all relations so the response does not
-        # generate unnecessary additional queries.
-        contract = get_discography_contract(
-            contract.contract.external_id
+        contract = (
+            get_discography_contract_or_404(
+                contract.contract.external_id
+            )
         )
 
         return Response(
@@ -70,7 +92,9 @@ class DiscographyContractCreateView(APIView):
         )
 
 
-class DiscographyContractDetailView(APIView):
+class DiscographyContractDetailView(
+    APIView
+):
 
     permission_classes = [AllowAny]
 
@@ -80,15 +104,27 @@ class DiscographyContractDetailView(APIView):
         external_id,
     ):
 
-        contract = get_discography_contract(
+        # For GET we do NOT use get_object_or_404.
+        contract = find_discography_contract(
             external_id
         )
 
-        return Response(
-            build_discography_response(
-                contract
+        if contract is not None:
+
+            return Response(
+                build_discography_response(
+                    contract
+                ),
+                status=status.HTTP_200_OK,
+            )
+
+        return get_peer_fallback_response(
+            request,
+            (
+                f"/api/contracts/"
+                f"discography/"
+                f"{external_id}"
             ),
-            status=status.HTTP_200_OK,
         )
 
     def put(
@@ -97,8 +133,11 @@ class DiscographyContractDetailView(APIView):
         external_id,
     ):
 
-        contract = get_discography_contract(
-            external_id
+        # PUT remains strictly local.
+        contract = (
+            get_discography_contract_or_404(
+                external_id
+            )
         )
 
         serializer = (
@@ -112,10 +151,12 @@ class DiscographyContractDetailView(APIView):
             raise_exception=True
         )
 
-        contract = serializer.save()
+        serializer.save()
 
-        contract = get_discography_contract(
-            external_id
+        contract = (
+            get_discography_contract_or_404(
+                external_id
+            )
         )
 
         return Response(
