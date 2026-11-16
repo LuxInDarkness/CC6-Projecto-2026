@@ -34,6 +34,10 @@ from .integrations import (
     ExternalRecords,
 )
 
+from .bookings import (
+    EventBookings,
+)
+
 
 __all__ = [
     "Parties",
@@ -51,4 +55,5 @@ __all__ = [
     "SiteAvailableDates",
     "ExternalSystems",
     "ExternalRecords",
+    "EventBookings",
 ]

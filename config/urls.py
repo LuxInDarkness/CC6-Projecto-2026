@@ -26,6 +26,11 @@ urlpatterns = [
     ),
 
     path(
+        "api/internal/",
+        include("api.internal_urls"),
+    ),
+
+    path(
         "admin/",
         admin.site.urls,
     ),
