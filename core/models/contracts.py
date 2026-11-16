@@ -1,8 +1,18 @@
 from django.db import models
 
-from .catalog import Albums
+from .catalog import (
+    Albums,
+    Products,
+)
+
 from .events import Events
-from .parties import Artists, RecordLabels
+
+from .parties import (
+    Artists,
+    Manufacturers,
+    RecordLabels,
+)
+
 from .sites import Sites
 
 
@@ -96,8 +106,9 @@ class Contracts(models.Model):
         db_table = "contracts"
 
     def __str__(self):
-        return self.external_id or str(
-            self.contract_id
+        return (
+            self.external_id
+            or str(self.contract_id)
         )
 
 
@@ -139,6 +150,43 @@ class DiscographyContracts(models.Model):
     class Meta:
         managed = False
         db_table = "discography_contracts"
+
+    def __str__(self):
+        return (
+            self.contract.external_id
+            or str(self.contract.contract_id)
+        )
+
+
+class ManufacturingContracts(models.Model):
+
+    contract = models.OneToOneField(
+        Contracts,
+        db_column="contract_id",
+        primary_key=True,
+        on_delete=models.CASCADE,
+        related_name="manufacturing_details",
+    )
+
+    manufacturer = models.ForeignKey(
+        Manufacturers,
+        db_column="manufacturer_id",
+        on_delete=models.PROTECT,
+        related_name="manufacturing_contracts",
+    )
+
+    product = models.ForeignKey(
+        Products,
+        db_column="product_id",
+        on_delete=models.PROTECT,
+        related_name="manufacturing_contracts",
+    )
+
+    release_date = models.DateField()
+
+    class Meta:
+        managed = False
+        db_table = "manufacturing_contracts"
 
     def __str__(self):
         return (

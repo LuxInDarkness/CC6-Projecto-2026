@@ -29,9 +29,7 @@ class Parties(models.Model):
         choices=PartyType.choices,
     )
 
-    name = models.CharField(
-        max_length=255,
-    )
+    name = models.CharField(max_length=255)
 
     email = models.CharField(
         max_length=320,
@@ -181,6 +179,55 @@ class RecordLabels(models.Model):
     class Meta:
         managed = False
         db_table = "record_labels"
+
+    def __str__(self):
+        return self.party.name
+
+
+class Manufacturers(models.Model):
+
+    manufacturer_id = models.BigAutoField(
+        primary_key=True,
+    )
+
+    external_id = models.CharField(
+        max_length=15,
+        unique=True,
+        null=True,
+        blank=True,
+        editable=False,
+    )
+
+    party = models.OneToOneField(
+        Parties,
+        db_column="party_id",
+        on_delete=models.CASCADE,
+        related_name="manufacturer",
+    )
+
+    manufacturer_type = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+    )
+
+    website = models.CharField(
+        max_length=2048,
+        null=True,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    class Meta:
+        managed = False
+        db_table = "manufacturers"
 
     def __str__(self):
         return self.party.name
