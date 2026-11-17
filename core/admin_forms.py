@@ -8,6 +8,7 @@ from core.models import (
     Contracts,
     DiscographyContractAdminProxy,
     DiscographyContracts,
+    Events,
     EventSites,
     Manufacturers,
     ManufacturingContractAdminProxy,
@@ -406,10 +407,13 @@ class ArtistPricingAdminForm(
     forms.Form
 ):
 
-    artist_id = forms.CharField(
-        label="Discography Artist ID",
-        help_text="Example: KNG1",
-        max_length=100,
+    artist = forms.ModelChoiceField(
+        queryset=(
+            Artists.objects
+            .all()
+            .order_by("stage_name")
+        ),
+        label="Artist",
     )
 
 
@@ -423,14 +427,20 @@ class EventProposalAdminForm(
         (3, "Festival"),
     )
 
-    artist_id = forms.CharField(
-        label="Discography Artist ID",
-        max_length=100,
+    artist = forms.ModelChoiceField(
+        queryset=(
+            Artists.objects
+            .all()
+            .order_by("stage_name")
+        ),
     )
 
-    event_id = forms.CharField(
-        label="Event ID sent to Discography",
-        max_length=100,
+    event = forms.ModelChoiceField(
+        queryset=(
+            Events.objects
+            .all()
+            .order_by("-start_date")
+        ),
     )
 
     event_type_id = forms.ChoiceField(
@@ -479,23 +489,37 @@ class ManufacturingRequestAdminForm(
     forms.Form
 ):
 
-    event_id = forms.CharField(
-        max_length=100,
+    event = forms.ModelChoiceField(
+        queryset=(
+            Events.objects
+            .all()
+            .order_by("-start_date")
+        ),
     )
 
-    artist_id = forms.CharField(
-        max_length=100,
+    artist = forms.ModelChoiceField(
+        queryset=(
+            Artists.objects
+            .all()
+            .order_by("stage_name")
+        ),
     )
 
     contract_id = forms.CharField(
         label="Discography Contract ID",
+        help_text=(
+            "Contract returned by Discography, "
+            "for example KNGC-4."
+        ),
         max_length=100,
     )
 
     requested_delivery_date = (
         forms.DateField(
             widget=forms.DateInput(
-                attrs={"type": "date"}
+                attrs={
+                    "type": "date",
+                }
             )
         )
     )
@@ -549,10 +573,7 @@ class ManufacturingRequestAdminForm(
             if not isinstance(item, dict):
 
                 raise forms.ValidationError(
-                    (
-                        "Every product must be "
-                        "a JSON object."
-                    )
+                    "Every product must be a JSON object."
                 )
 
             product_type = item.get(
@@ -567,7 +588,7 @@ class ManufacturingRequestAdminForm(
 
                 raise forms.ValidationError(
                     (
-                        f"Unsupported product type: "
+                        "Unsupported product type: "
                         f"{product_type}"
                     )
                 )

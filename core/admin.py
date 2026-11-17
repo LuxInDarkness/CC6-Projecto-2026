@@ -1,6 +1,8 @@
 import json
 from django.contrib import admin, messages
 from django.db import DatabaseError
+from django.urls import reverse
+from django.utils.html import format_html
 
 from core.models import (
     Albums,
@@ -60,6 +62,11 @@ from api.services.external.discography import (
 
 from api.services.external.manufacturing import (
     ManufacturingClient,
+)
+
+from api.services.external.mappings import (
+    ExternalMappingError,
+    get_external_id,
 )
 
 
@@ -142,6 +149,7 @@ class ArtistsAdmin(admin.ModelAdmin):
 
     readonly_fields = (
         "external_id",
+        "integration_actions",
         "created_at",
         "updated_at",
     )
@@ -156,6 +164,36 @@ class ArtistsAdmin(admin.ModelAdmin):
     def party_name(self, obj):
 
         return obj.party.name
+
+    @admin.display(
+        description="External Integrations"
+    )
+    def integration_actions(
+        self,
+        obj,
+    ):
+
+        if obj is None:
+            return "-"
+
+        url = (
+            reverse(
+                (
+                    "admin:"
+                    "core_"
+                    "discographyintegrationconsole_"
+                    "changelist"
+                )
+            )
+            + f"?artist={obj.artist_id}"
+        )
+
+        return format_html(
+            '<a class="button" href="{}">'
+            "Discography"
+            "</a>",
+            url,
+        )
 
 
 # ============================================================
@@ -421,6 +459,7 @@ class EventsAdmin(admin.ModelAdmin):
 
     readonly_fields = (
         "external_id",
+        "integration_actions",
         "created_at",
         "updated_at",
     )
@@ -432,6 +471,54 @@ class EventsAdmin(admin.ModelAdmin):
     ordering = (
         "-start_date",
     )
+
+    @admin.display(
+        description="External Integrations"
+    )
+    def integration_actions(
+        self,
+        obj,
+    ):
+
+        if obj is None:
+            return "-"
+
+        discography_url = (
+            reverse(
+                (
+                    "admin:"
+                    "core_"
+                    "discographyintegrationconsole_"
+                    "changelist"
+                )
+            )
+            + f"?event={obj.event_id}"
+        )
+
+        manufacturing_url = (
+            reverse(
+                (
+                    "admin:"
+                    "core_"
+                    "manufacturingintegrationconsole_"
+                    "changelist"
+                )
+            )
+            + f"?event={obj.event_id}"
+        )
+
+        return format_html(
+            (
+                '<a class="button" href="{}">'
+                "Discography"
+                "</a> "
+                '<a class="button" href="{}">'
+                "Manufacturing"
+                "</a>"
+            ),
+            discography_url,
+            manufacturing_url,
+        )
 
 
 # ============================================================
@@ -1498,6 +1585,22 @@ class DiscographyIntegrationConsoleAdmin(
         extra_context=None,
     ):
 
+        artist_initial = None
+
+        artist_id = request.GET.get(
+            "artist"
+        )
+
+        if artist_id:
+
+            artist_initial = (
+                Artists.objects
+                .filter(
+                    artist_id=artist_id
+                )
+                .first()
+            )
+
         availability_form = (
             ArtistAvailabilityAdminForm(
                 prefix="availability"
@@ -1506,13 +1609,36 @@ class DiscographyIntegrationConsoleAdmin(
 
         pricing_form = (
             ArtistPricingAdminForm(
-                prefix="pricing"
+                prefix="pricing",
+                initial={
+                    "artist": artist_initial,
+                },
             )
         )
 
+        event_initial = None
+
+        event_id = request.GET.get(
+            "event"
+        )
+
+        if event_id:
+
+            event_initial = (
+                Events.objects
+                .filter(
+                    event_id=event_id
+                )
+                .first()
+            )
+
         proposal_form = (
             EventProposalAdminForm(
-                prefix="proposal"
+                prefix="proposal",
+                initial={
+                    "artist": artist_initial,
+                    "event": event_initial,
+                },
             )
         )
 
@@ -1581,13 +1707,23 @@ class DiscographyIntegrationConsoleAdmin(
 
                     if pricing_form.is_valid():
 
+                        artist = (
+                            pricing_form
+                            .cleaned_data[
+                                "artist"
+                            ]
+                        )
+
+                        artist_external_id = get_external_id(
+                            system_name="Discography Gateway",
+                            entity_type="ARTIST",
+                            internal_id=artist.artist_id,
+                        )
+
                         result = (
                             DiscographyClient()
                             .get_artist_pricing(
-                                pricing_form
-                                .cleaned_data[
-                                    "artist_id"
-                                ]
+                                artist_external_id
                             )
                         )
 
@@ -1611,27 +1747,40 @@ class DiscographyIntegrationConsoleAdmin(
                             .cleaned_data
                         )
 
+                        artist = data["artist"]
+
+                        event = data["event"]
+
+
+                        artist_external_id = get_external_id(
+                            system_name="Discography Gateway",
+                            entity_type="ARTIST",
+                            internal_id=artist.artist_id,
+                        )
+
+
                         result = (
                             DiscographyClient()
                             .create_event_proposal(
                                 artist_id=(
-                                    data[
-                                        "artist_id"
-                                    ]
+                                    artist_external_id
                                 ),
+
+                                # Our public event identifier is safe
+                                # to use as the requesting system's
+                                # external event identifier.
                                 event_id=(
-                                    data["event_id"]
+                                    event.external_id
                                 ),
+
                                 event_type_id=int(
-                                    data[
-                                        "event_type_id"
-                                    ]
+                                    data["event_type_id"]
                                 ),
+
                                 proposed_price=float(
-                                    data[
-                                        "proposed_price"
-                                    ]
+                                    data["proposed_price"]
                                 ),
+
                                 event_datetime=(
                                     data[
                                         "event_datetime"
@@ -1639,10 +1788,9 @@ class DiscographyIntegrationConsoleAdmin(
                                         "%d-%m-%Y %H:%M"
                                     )
                                 ),
+
                                 is_requested=(
-                                    data[
-                                        "is_requested"
-                                    ]
+                                    data["is_requested"]
                                 ),
                             )
                         )
@@ -1676,11 +1824,21 @@ class DiscographyIntegrationConsoleAdmin(
                             "Event Contract"
                         )
 
-            except ExternalApiError as exc:
+            except (
+                ExternalApiError,
+                ExternalMappingError,
+            ) as exc:
 
                 error = str(exc)
 
-                if exc.data:
+                if (
+                    isinstance(
+                        exc,
+                        ExternalApiError,
+                    )
+                    and exc.data
+                ):
+
                     error += (
                         "\n\n"
                         + json.dumps(
@@ -1770,9 +1928,28 @@ class ManufacturingIntegrationConsoleAdmin(
         extra_context=None,
     ):
 
+        event_initial = None
+
+        event_id = request.GET.get(
+            "event"
+        )
+
+        if event_id:
+
+            event_initial = (
+                Events.objects
+                .filter(
+                    event_id=event_id
+                )
+                .first()
+            )
+
         request_form = (
             ManufacturingRequestAdminForm(
-                prefix="request"
+                prefix="request",
+                initial={
+                    "event": event_initial,
+                },
             )
         )
 
@@ -1810,20 +1987,34 @@ class ManufacturingIntegrationConsoleAdmin(
                             .cleaned_data
                         )
 
+                        event = data["event"]
+
+                        artist = data["artist"]
+
+
+                        artist_external_id = get_external_id(
+                            system_name="Discography Gateway",
+                            entity_type="ARTIST",
+                            internal_id=artist.artist_id,
+                        )
+
+
                         result = (
                             ManufacturingClient()
                             .create_request(
+
                                 event_id=(
-                                    data["event_id"]
+                                    event.external_id
                                 ),
+
                                 artist_id=(
-                                    data["artist_id"]
+                                    artist_external_id
                                 ),
+
                                 contract_id=(
-                                    data[
-                                        "contract_id"
-                                    ]
+                                    data["contract_id"]
                                 ),
+
                                 requested_delivery_date=(
                                     data[
                                         "requested_delivery_date"
@@ -1831,6 +2022,7 @@ class ManufacturingIntegrationConsoleAdmin(
                                         "%d-%m-%Y"
                                     )
                                 ),
+
                                 products=(
                                     data["products"]
                                 ),
@@ -1873,11 +2065,20 @@ class ManufacturingIntegrationConsoleAdmin(
                             "Manufacturing Status"
                         )
 
-            except ExternalApiError as exc:
+            except (
+                ExternalApiError,
+                ExternalMappingError,
+            ) as exc:
 
                 error = str(exc)
 
-                if exc.data:
+                if (
+                    isinstance(
+                        exc,
+                        ExternalApiError,
+                    )
+                    and exc.data
+                ):
 
                     error += (
                         "\n\n"
