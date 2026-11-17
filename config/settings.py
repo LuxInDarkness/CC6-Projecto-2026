@@ -160,3 +160,21 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAdminUser",
     ],
 }
+
+DISCOGRAPHY_BASE_URL = os.getenv(
+    "DISCOGRAPHY_BASE_URL",
+    "",
+).rstrip("/")
+
+MANUFACTURING_BASE_URL = os.getenv(
+    "MANUFACTURING_BASE_URL",
+    "",
+).rstrip("/")
+
+EXTERNAL_API_TIMEOUT_SECONDS = float(
+    os.getenv(
+        "EXTERNAL_API_TIMEOUT_SECONDS",
+        "5",
+    )
+)
+
