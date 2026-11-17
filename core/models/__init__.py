@@ -40,6 +40,13 @@ from .integrations import (
     ExternalSystems,
 )
 
+from .admin_proxies import (
+    DiscographyContractAdminProxy,
+    DiscographyIntegrationConsole,
+    ManufacturingContractAdminProxy,
+    ManufacturingIntegrationConsole,
+)
+
 
 __all__ = [
     "Parties",
@@ -60,4 +67,8 @@ __all__ = [
     "EventBookings",
     "ApiRawData",
     "ApiSyncLog",
+    "DiscographyContractAdminProxy",
+    "DiscographyIntegrationConsole",
+    "ManufacturingContractAdminProxy",
+    "ManufacturingIntegrationConsole",
 ]

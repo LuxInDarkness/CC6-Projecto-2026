@@ -66,6 +66,8 @@ class Parties(models.Model):
     class Meta:
         managed = False
         db_table = "parties"
+        verbose_name = "Party"
+        verbose_name_plural = "Parties"
 
     def __str__(self):
         return self.name
@@ -130,6 +132,8 @@ class Artists(models.Model):
     class Meta:
         managed = False
         db_table = "artists"
+        verbose_name = "Artist"
+        verbose_name_plural = "Artists"
 
     def __str__(self):
         return self.stage_name
@@ -179,6 +183,8 @@ class RecordLabels(models.Model):
     class Meta:
         managed = False
         db_table = "record_labels"
+        verbose_name = "Record Label"
+        verbose_name_plural = "Record Labels"
 
     def __str__(self):
         return self.party.name
@@ -228,6 +234,8 @@ class Manufacturers(models.Model):
     class Meta:
         managed = False
         db_table = "manufacturers"
+        verbose_name = "Manufacturer"
+        verbose_name_plural = "Manufacturers"
 
     def __str__(self):
         return self.party.name

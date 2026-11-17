@@ -54,6 +54,8 @@ class Albums(models.Model):
     class Meta:
         managed = False
         db_table = "albums"
+        verbose_name = "Album"
+        verbose_name_plural = "Albums"
 
     def __str__(self):
         return self.title
@@ -113,6 +115,8 @@ class Products(models.Model):
     class Meta:
         managed = False
         db_table = "products"
+        verbose_name = "Product"
+        verbose_name_plural = "Products"
 
     def __str__(self):
         return self.product_name

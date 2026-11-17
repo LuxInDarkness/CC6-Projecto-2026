@@ -1,0 +1,80 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+
+<h1>Manufacturing Console</h1>
+
+<p>
+    Create and inspect Manufacturing requests directly
+    from the Event Management administration interface.
+</p>
+
+<hr>
+
+<h2>Create Manufacturing Request</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    {{ request_form.as_p }}
+
+    <button
+        type="submit"
+        class="default"
+        name="operation"
+        value="create"
+    >
+        Send Request
+    </button>
+</form>
+
+<hr>
+
+<h2>Lookup Manufacturing Request</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    {{ lookup_form.as_p }}
+
+    <button
+        type="submit"
+        class="default"
+        name="operation"
+        value="lookup"
+    >
+        Get Status
+    </button>
+</form>
+
+{% if error %}
+
+<hr>
+
+<h2>Error</h2>
+
+<pre>{{ error }}</pre>
+
+{% endif %}
+
+{% if result %}
+
+<hr>
+
+<h2>
+    {{ result_title|default:"Result" }}
+</h2>
+
+<pre
+    style="
+        white-space: pre-wrap;
+        overflow-x: auto;
+        padding: 16px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    "
+>{{ result }}</pre>
+
+{% endif %}
+
+{% endblock %}

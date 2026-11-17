@@ -104,6 +104,8 @@ class Contracts(models.Model):
     class Meta:
         managed = False
         db_table = "contracts"
+        verbose_name = "Contract"
+        verbose_name_plural = "Contracts"
 
     def __str__(self):
         return (
@@ -150,6 +152,8 @@ class DiscographyContracts(models.Model):
     class Meta:
         managed = False
         db_table = "discography_contracts"
+        verbose_name = "Discography Contract"
+        verbose_name_plural = "Discography Contracts"
 
     def __str__(self):
         return (
@@ -187,6 +191,8 @@ class ManufacturingContracts(models.Model):
     class Meta:
         managed = False
         db_table = "manufacturing_contracts"
+        verbose_name = "Manufacturing Contract"
+        verbose_name_plural = "Manufacturing Contracts"
 
     def __str__(self):
         return (

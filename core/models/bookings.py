@@ -78,6 +78,8 @@ class EventBookings(models.Model):
     class Meta:
         managed = False
         db_table = "event_bookings"
+        verbose_name = "Event Booking"
+        verbose_name_plural = "Event Bookings"
 
     def __str__(self):
         return (

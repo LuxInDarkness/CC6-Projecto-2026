@@ -1,0 +1,118 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+
+<h1>Discography Console</h1>
+
+<p>
+    Query the Discography gateway directly from the
+    Event Management administration interface.
+</p>
+
+<hr>
+
+<h2>Artist Availability</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    {{ availability_form.as_p }}
+
+    <button
+        type="submit"
+        class="default"
+        name="operation"
+        value="availability"
+    >
+        Search Availability
+    </button>
+</form>
+
+<hr>
+
+<h2>Artist Pricing</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    {{ pricing_form.as_p }}
+
+    <button
+        type="submit"
+        class="default"
+        name="operation"
+        value="pricing"
+    >
+        Get Pricing
+    </button>
+</form>
+
+<hr>
+
+<h2>Create Event Proposal</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    {{ proposal_form.as_p }}
+
+    <button
+        type="submit"
+        class="default"
+        name="operation"
+        value="proposal"
+    >
+        Send Proposal
+    </button>
+</form>
+
+<hr>
+
+<h2>Lookup Event Contract</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    {{ contract_form.as_p }}
+
+    <button
+        type="submit"
+        class="default"
+        name="operation"
+        value="contract"
+    >
+        Get Contract
+    </button>
+</form>
+
+{% if error %}
+
+<hr>
+
+<h2>Error</h2>
+
+<pre>{{ error }}</pre>
+
+{% endif %}
+
+{% if result %}
+
+<hr>
+
+<h2>
+    {{ result_title|default:"Result" }}
+</h2>
+
+<pre
+    style="
+        white-space: pre-wrap;
+        overflow-x: auto;
+        padding: 16px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    "
+>{{ result }}</pre>
+
+{% endif %}
+
+{% endblock %}

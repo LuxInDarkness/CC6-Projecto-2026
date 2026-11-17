@@ -33,3 +33,5 @@ class SiteAvailableDates(models.Model):
     class Meta:
         managed = False
         db_table = "v_site_available_dates"
+        verbose_name = "Site Available Date"
+        verbose_name_plural = "Site Available Dates"

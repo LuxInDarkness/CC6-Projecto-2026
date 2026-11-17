@@ -101,6 +101,8 @@ class Sites(models.Model):
     class Meta:
         managed = False
         db_table = "sites"
+        verbose_name = "Site"
+        verbose_name_plural = "Sites"
 
     def __str__(self):
         return self.name

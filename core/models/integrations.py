@@ -45,6 +45,8 @@ class ExternalSystems(models.Model):
     class Meta:
         managed = False
         db_table = "external_systems"
+        verbose_name = "External System"
+        verbose_name_plural = "External Systems"
 
     def __str__(self):
         return self.name
@@ -98,6 +100,8 @@ class ExternalRecords(models.Model):
     class Meta:
         managed = False
         db_table = "external_records"
+        verbose_name = "External Record"
+        verbose_name_plural = "External Records"
 
     def __str__(self):
         return (
@@ -176,6 +180,8 @@ class ApiSyncLog(models.Model):
     class Meta:
         managed = False
         db_table = "api_sync_log"
+        verbose_name = "API Sync Log"
+        verbose_name_plural = "API Sync Logs"
 
 
 class ApiRawData(models.Model):
@@ -222,3 +228,5 @@ class ApiRawData(models.Model):
     class Meta:
         managed = False
         db_table = "api_raw_data"
+        verbose_name = "API Raw Data"
+        verbose_name_plural = "API Raw Data"

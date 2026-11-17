@@ -59,6 +59,8 @@ class Events(models.Model):
     class Meta:
         managed = False
         db_table = "events"
+        verbose_name = "Event"
+        verbose_name_plural = "Events"
 
     def __str__(self):
         return self.name
@@ -93,6 +95,8 @@ class EventSites(models.Model):
     class Meta:
         managed = False
         db_table = "event_sites"
+        verbose_name = "Event Site"
+        verbose_name_plural = "Event Sites"
 
     def __str__(self):
         return (
