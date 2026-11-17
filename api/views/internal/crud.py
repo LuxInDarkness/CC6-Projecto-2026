@@ -1,5 +1,5 @@
 from django.db import (
-    IntegrityError,
+    DatabaseError,
     transaction,
 )
 
@@ -17,10 +17,29 @@ from rest_framework.response import Response
 from core.models import (
     Albums,
     Artists,
+    Contracts,
+    EventBookings,
     Events,
+    ExternalRecords,
+    ExternalSystems,
     Manufacturers,
     Products,
     Sites,
+    ApiRawData,
+    ApiSyncLog,
+)
+
+from api.serializers.internal.bookings import (
+    InternalBookingSerializer,
+)
+
+from api.serializers.internal.contracts_crud import (
+    InternalContractCrudSerializer,
+)
+
+from api.serializers.internal.external_systems import (
+    InternalExternalRecordSerializer,
+    InternalExternalSystemSerializer,
 )
 
 from api.serializers.internal.crud import (
@@ -30,6 +49,11 @@ from api.serializers.internal.crud import (
     InternalManufacturerSerializer,
     InternalProductSerializer,
     InternalSiteSerializer,
+)
+
+from api.serializers.internal.audit import (
+    InternalRawDataSerializer,
+    InternalSyncLogSerializer,
 )
 
 
@@ -78,7 +102,7 @@ class InternalCrudViewSet(
                     **kwargs,
                 )
 
-        except IntegrityError as exc:
+        except DatabaseError as exc:
 
             return self._conflict_response(
                 exc
@@ -100,7 +124,7 @@ class InternalCrudViewSet(
                     **kwargs,
                 )
 
-        except IntegrityError as exc:
+        except DatabaseError as exc:
 
             return self._conflict_response(
                 exc
@@ -122,7 +146,7 @@ class InternalCrudViewSet(
                     **kwargs,
                 )
 
-        except IntegrityError as exc:
+        except DatabaseError as exc:
 
             return self._conflict_response(
                 exc
@@ -145,7 +169,7 @@ class InternalCrudViewSet(
                     instance
                 )
 
-        except IntegrityError as exc:
+        except DatabaseError as exc:
 
             return self._conflict_response(
                 exc
@@ -317,3 +341,216 @@ class InternalProductViewSet(
     serializer_class = (
         InternalProductSerializer
     )
+
+
+# ============================================================
+# CONTRACTS
+# ============================================================
+
+
+class InternalContractViewSet(
+    InternalCrudViewSet
+):
+
+    queryset = (
+        Contracts.objects
+        .select_related(
+            "event",
+            "site",
+        )
+        .all()
+        .order_by(
+            "-created_at",
+        )
+    )
+
+    serializer_class = (
+        InternalContractCrudSerializer
+    )
+
+    def destroy(
+        self,
+        request,
+        *args,
+        **kwargs,
+    ):
+
+        instance = self.get_object()
+
+        if EventBookings.objects.filter(
+            contract=instance
+        ).exists():
+
+            return Response(
+                {
+                    "detail": (
+                        "A contract with an associated "
+                        "booking cannot be deleted."
+                    )
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        return super().destroy(
+            request,
+            *args,
+            **kwargs,
+        )
+
+
+# ============================================================
+# BOOKINGS
+# ============================================================
+
+
+class InternalBookingViewSet(
+    InternalCrudViewSet
+):
+
+    queryset = (
+        EventBookings.objects
+        .select_related(
+            "contract",
+        )
+        .all()
+        .order_by(
+            "-start_date",
+        )
+    )
+
+    serializer_class = (
+        InternalBookingSerializer
+    )
+
+    def destroy(
+        self,
+        request,
+        *args,
+        **kwargs,
+    ):
+
+        instance = self.get_object()
+
+        if instance.contract_id is not None:
+
+            return Response(
+                {
+                    "detail": (
+                        "Bookings generated from a "
+                        "contract cannot be deleted "
+                        "directly."
+                    )
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        return super().destroy(
+            request,
+            *args,
+            **kwargs,
+        )
+
+
+# ============================================================
+# EXTERNAL SYSTEMS
+# ============================================================
+
+
+class InternalExternalSystemViewSet(
+    InternalCrudViewSet
+):
+
+    queryset = (
+        ExternalSystems.objects
+        .all()
+        .order_by("name")
+    )
+
+    serializer_class = (
+        InternalExternalSystemSerializer
+    )
+
+    # external_systems does not have one of our
+    # generated public IDs.
+    lookup_field = "system_id"
+
+    lookup_url_kwarg = "system_id"
+
+
+# ============================================================
+# EXTERNAL RECORDS
+# ============================================================
+
+
+class InternalExternalRecordViewSet(
+    InternalCrudViewSet
+):
+
+    queryset = (
+        ExternalRecords.objects
+        .select_related("system")
+        .all()
+        .order_by(
+            "system__name",
+            "entity_type",
+            "external_id",
+        )
+    )
+
+    serializer_class = (
+        InternalExternalRecordSerializer
+    )
+
+    lookup_field = "external_record_id"
+
+    lookup_url_kwarg = (
+        "external_record_id"
+    )
+
+
+class InternalSyncLogViewSet(
+    viewsets.ReadOnlyModelViewSet
+):
+
+    permission_classes = [
+        IsAdminUser,
+    ]
+
+    queryset = (
+        ApiSyncLog.objects
+        .select_related("system")
+        .all()
+        .order_by("-started_at")
+    )
+
+    serializer_class = (
+        InternalSyncLogSerializer
+    )
+
+    lookup_field = "sync_id"
+
+    lookup_url_kwarg = "sync_id"
+
+
+class InternalRawDataViewSet(
+    viewsets.ReadOnlyModelViewSet
+):
+
+    permission_classes = [
+        IsAdminUser,
+    ]
+
+    queryset = (
+        ApiRawData.objects
+        .select_related("system")
+        .all()
+        .order_by("-received_at")
+    )
+
+    serializer_class = (
+        InternalRawDataSerializer
+    )
+
+    lookup_field = "raw_data_id"
+
+    lookup_url_kwarg = "raw_data_id"

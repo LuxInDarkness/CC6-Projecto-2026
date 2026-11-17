@@ -29,13 +29,15 @@ from .availability import (
     SiteAvailableDates,
 )
 
-from .integrations import (
-    ExternalSystems,
-    ExternalRecords,
-)
-
 from .bookings import (
     EventBookings,
+)
+
+from .integrations import (
+    ApiRawData,
+    ApiSyncLog,
+    ExternalRecords,
+    ExternalSystems,
 )
 
 
@@ -56,4 +58,6 @@ __all__ = [
     "ExternalSystems",
     "ExternalRecords",
     "EventBookings",
+    "ApiRawData",
+    "ApiSyncLog",
 ]

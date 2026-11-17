@@ -5,10 +5,16 @@ from .base import ExternalApiClient
 
 class ManufacturingClient:
 
+    SYSTEM_NAME = "Manufacturing Gateway"
+
     def __init__(self):
 
         self.client = ExternalApiClient(
-            settings.MANUFACTURING_BASE_URL
+            system_name=self.SYSTEM_NAME,
+            fallback_base_url=(
+                settings
+                .MANUFACTURING_BASE_URL
+            ),
         )
 
     def create_request(
@@ -33,6 +39,10 @@ class ManufacturingClient:
                 ),
                 "products": products,
             },
+            entity_type=(
+                "MANUFACTURING_REQUEST"
+            ),
+            external_id=event_id,
         )
 
     def get_request(
@@ -52,4 +62,8 @@ class ManufacturingClient:
             "GET",
             "/api/manufacture/requests/",
             params=params,
+            entity_type=(
+                "MANUFACTURING_REQUEST"
+            ),
+            external_id=request_id,
         )

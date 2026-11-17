@@ -5,15 +5,16 @@ from .base import ExternalApiClient
 
 class DiscographyClient:
 
+    SYSTEM_NAME = "Discography Gateway"
+
     def __init__(self):
 
         self.client = ExternalApiClient(
-            settings.DISCOGRAPHY_BASE_URL
+            system_name=self.SYSTEM_NAME,
+            fallback_base_url=(
+                settings.DISCOGRAPHY_BASE_URL
+            ),
         )
-
-    # --------------------------------------------------------
-    # Artists
-    # --------------------------------------------------------
 
     def get_artist_availability(
         self,
@@ -28,6 +29,7 @@ class DiscographyClient:
                 "start_date": start_date,
                 "end_date": end_date,
             },
+            entity_type="ARTIST_AVAILABILITY",
         )
 
     def get_artist_pricing(
@@ -37,12 +39,13 @@ class DiscographyClient:
 
         return self.client.request(
             "GET",
-            f"/api/artists/{artist_id}/pricing",
+            (
+                f"/api/artists/"
+                f"{artist_id}/pricing"
+            ),
+            entity_type="ARTIST_PRICING",
+            external_id=artist_id,
         )
-
-    # --------------------------------------------------------
-    # Event contracts
-    # --------------------------------------------------------
 
     def create_event_proposal(
         self,
@@ -61,11 +64,21 @@ class DiscographyClient:
             json={
                 "id_artist": artist_id,
                 "id_event": event_id,
-                "id_event_type": event_type_id,
-                "proposed_price": proposed_price,
-                "event_datetime": event_datetime,
-                "is_requested": is_requested,
+                "id_event_type": (
+                    event_type_id
+                ),
+                "proposed_price": (
+                    proposed_price
+                ),
+                "event_datetime": (
+                    event_datetime
+                ),
+                "is_requested": (
+                    is_requested
+                ),
             },
+            entity_type="EVENT_PROPOSAL",
+            external_id=event_id,
         )
 
     def get_event_contract(
@@ -73,9 +86,11 @@ class DiscographyClient:
         contract_id,
     ):
 
-        # Despite the endpoint parameter being called
-        # id_event, their API expects the contract ID.
         return self.client.request(
             "GET",
             f"/api/event/{contract_id}",
+            entity_type=(
+                "DISCOGRAPHY_EVENT_CONTRACT"
+            ),
+            external_id=contract_id,
         )

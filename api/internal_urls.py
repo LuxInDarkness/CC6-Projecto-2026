@@ -23,10 +23,16 @@ from api.views.internal.integrations import (
 from api.views.internal.crud import (
     InternalAlbumViewSet,
     InternalArtistViewSet,
+    InternalBookingViewSet,
+    InternalContractViewSet,
     InternalEventViewSet,
+    InternalExternalRecordViewSet,
+    InternalExternalSystemViewSet,
     InternalManufacturerViewSet,
     InternalProductViewSet,
     InternalSiteViewSet,
+    InternalRawDataViewSet,
+    InternalSyncLogViewSet,
 )
 
 router = DefaultRouter(
@@ -68,6 +74,42 @@ router.register(
     "products",
     InternalProductViewSet,
     basename="internal-products",
+)
+
+router.register(
+    "contracts",
+    InternalContractViewSet,
+    basename="internal-contracts",
+)
+
+router.register(
+    "bookings",
+    InternalBookingViewSet,
+    basename="internal-bookings",
+)
+
+router.register(
+    "external-systems",
+    InternalExternalSystemViewSet,
+    basename="internal-external-systems",
+)
+
+router.register(
+    "external-records",
+    InternalExternalRecordViewSet,
+    basename="internal-external-records",
+)
+
+router.register(
+    "sync-logs",
+    InternalSyncLogViewSet,
+    basename="internal-sync-logs",
+)
+
+router.register(
+    "raw-data",
+    InternalRawDataViewSet,
+    basename="internal-raw-data",
 )
 
 
